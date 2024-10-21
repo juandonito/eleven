@@ -3,14 +3,13 @@ import knex from '../db';
 
 const PlanetController = {
   getAll: async (req: Request, res: Response): Promise<void> => {
-
     try {
-      const planets = (await knex('planets')
-      .select('planets.*', 'images.path', 'images.name as imageName')
-      .join('images', 'images.id' , '=' ,'planets.imageId')
-      .where((queryBuilder) => {
-      }))
-      .map(({id, name, isHabitable, description, path, imageName}) => ({
+      const planets = (
+        await knex('planets')
+          .select('planets.*', 'images.path', 'images.name as imageName')
+          .join('images', 'images.id', '=', 'planets.imageId')
+          .where((queryBuilder) => {})
+      ).map(({ id, name, isHabitable, description, path, imageName }) => ({
         id,
         name,
         isHabitable,
@@ -54,7 +53,10 @@ const PlanetController = {
     try {
       const [id] = await knex('planets').insert({ name, isHabitable, imageId });
       res.status(206).json({
-        id, name, isHabitable, imageId,
+        id,
+        name,
+        isHabitable,
+        imageId,
       });
     } catch (error) {
       res.status(500).json({ error: 'Internal Server Error' });
@@ -65,7 +67,9 @@ const PlanetController = {
     const { id } = req.params;
     const { name, isHabitable, imageId } = req.body;
     try {
-      const updatedRows = await knex('planets').where('id', id).update({ name, isHabitable, imageId });
+      const updatedRows = await knex('planets')
+        .where('id', id)
+        .update({ name, isHabitable, imageId });
       if (updatedRows > 0) {
         res.status(200).json({ message: 'Planet updated successfully' });
       } else {
