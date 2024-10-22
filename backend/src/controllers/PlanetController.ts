@@ -6,9 +6,8 @@ const PlanetController = {
     try {
       const planets = (
         await knex('planets')
+          .leftJoin('images', 'planets.imageId', 'images.id')
           .select('planets.*', 'images.path', 'images.name as imageName')
-          .join('images', 'images.id', '=', 'planets.imageId')
-          .where((queryBuilder) => {})
       ).map(({ id, name, isHabitable, description, path, imageName }) => ({
         id,
         name,
@@ -28,7 +27,11 @@ const PlanetController = {
   getById: async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     try {
-      const data = await knex('planets').where('id', id).first();
+      const data = await knex('planets')
+        .where('planets.id', id)
+        .leftJoin('images', 'planets.imageId', 'images.id')
+        .select('planets.*', 'images.path', 'images.name as imageName')
+        .first();
       if (data) {
         res.status(200).json({
           id: data.id,
