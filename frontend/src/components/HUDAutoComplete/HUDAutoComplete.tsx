@@ -1,11 +1,5 @@
 // React
-import {
-  ChangeEvent,
-  forwardRef,
-  InputHTMLAttributes,
-  useEffect,
-  useState,
-} from 'react';
+import { ChangeEvent, InputHTMLAttributes, useEffect, useState } from 'react';
 
 // Libs
 import classnames from 'classnames';
@@ -16,9 +10,6 @@ import { HUDListItem } from '../HUDListItem';
 // Helper
 import { waitMs } from '../../pages/Cockpit/helper';
 
-// Hooks
-import { useFetch } from '../../hooks/useFetch';
-
 // Error
 import { FetchError } from '../../errors/FetchError';
 
@@ -27,10 +18,10 @@ import styles from './HUDAutoComplete.module.css';
 
 interface HUDAutoCompleteProps
   extends Omit<
-  InputHTMLAttributes<HTMLInputElement>,
-  'onChange' | 'defaultValue'
+    InputHTMLAttributes<HTMLInputElement>,
+    'onChange' | 'defaultValue'
   > {
-  error?: string;
+  error?: string | null;
   fetchOptions: (
     searchTerm?: string,
     options?: RequestInit,
@@ -52,25 +43,19 @@ type AutoCompleteOptionsStateType = {
   isVisible: boolean;
 };
 
-export const HUDAutoComplete = forwardRef<
-HTMLInputElement | null,
-HUDAutoCompleteProps
->(function HUDInputComponent(
-  {
-    className,
-    defaultValue,
-    error = null,
-    fetchOptions,
-    label,
-    name,
-    onChange,
-    placeholder,
-    required = false,
-    style,
-    type = 'text',
-  },
-  ref,
-) {
+export function HUDAutoComplete({
+  className,
+  defaultValue,
+  error = null,
+  fetchOptions,
+  label,
+  name,
+  onChange,
+  placeholder,
+  required = false,
+  style,
+  type = 'text',
+}: HUDAutoCompleteProps) {
   const componentClassNames = classnames(styles.hudautocomplete, className);
   const inputClassNames = classnames(styles.hudautocompleteHtmlInput, {
     [styles.hudautocompleteHtmlInputError]: error !== null,
@@ -92,41 +77,31 @@ HUDAutoCompleteProps
   });
   const [selectedOption, setSelectedOption] =
     useState<AutoCompleteOptionType | null>();
-
-  const {
-    isLoading,
-    data,
-    error: fetchError,
-  } = useFetch<AutoCompleteOptionType[]>((options?: RequestInit) =>
-    fetchOptions(undefined, options),
-  );
-
-  useEffect(() => {
-    setOptions({
-      isLoading,
-      data,
-      error: fetchError,
-      isVisible: false,
-    });
-  }, [isLoading, data, fetchError]);
+  const [searchTerm, setSearchTerm] = useState<string>(defaultValue.label);
 
   const handleOptionOnClick = (selectedOption: AutoCompleteOptionType) => {
     setSelectedOption(selectedOption);
+    setSearchTerm(selectedOption.label);
+    setOptions({ ...options, isVisible: false });
     if (onChange) {
       onChange(selectedOption);
     }
   };
 
-  const handleInputOnChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = e.target.value;
-    const searchedList = await fetchOptions(searchTerm);
-    setOptions({
-      isLoading: false,
-      data: searchedList,
-      error: null,
-      isVisible: true,
-    });
+  const handleInputOnChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setOptions({ ...options, isLoading: true });
+
+      const data = await fetchOptions(searchTerm);
+      setOptions({ ...options, data, isLoading: false });
+    };
+
+    void fetchData();
+  }, [searchTerm, fetchOptions]);
 
   const handleVisibleOnFocus = () => {
     setOptions({ ...options, isVisible: true });
@@ -144,8 +119,7 @@ HUDAutoCompleteProps
         id={`${name}_value`}
         defaultValue={defaultValue.value}
         value={selectedOption?.value}
-        ref={ref}
-        type="hidden"
+        type='hidden'
       />
       <input
         id={name}
@@ -154,7 +128,7 @@ HUDAutoCompleteProps
         required={required}
         className={inputClassNames}
         placeholder={placeholder}
-        value={selectedOption?.label}
+        value={searchTerm}
         defaultValue={defaultValue.label}
         onChange={handleInputOnChange}
         onFocus={handleVisibleOnFocus}
@@ -180,4 +154,4 @@ HUDAutoCompleteProps
       )}
     </div>
   );
-});
+}

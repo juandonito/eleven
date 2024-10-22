@@ -1,5 +1,11 @@
 // React
-import { MouseEventHandler, FormEvent, useState } from 'react';
+import {
+  MouseEventHandler,
+  FormEvent,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 
 // Libs
 import classnames from 'classnames';
@@ -22,6 +28,11 @@ import {
 
 // Styles
 import styles from './AstronautForm.module.css';
+import {
+  AutoCompleteOptionType,
+  HUDAutoComplete,
+} from '../../../components/HUDAutoComplete/HUDAutoComplete.tsx';
+import { getPlanetListByNameAPICall } from '../../../api/planet.api.ts';
 
 type AstronautFormProps = {
   astronautForUpdate?: Astronaut | null;
@@ -46,54 +57,60 @@ export function AstronautForm({
 }: AstronautFormProps) {
   const componentClassNames = classnames(styles.astronautform, className);
   const { currentPlanet } = useCurrentPlanet();
-  const canCreate =
-    mode === 'create' &&
-    currentPlanet !== 'NO_WHERE' &&
-    currentPlanet?.isHabitable;
+  const canCreate = useMemo(
+    () =>
+      mode === 'create' &&
+      currentPlanet !== 'NO_WHERE' &&
+      currentPlanet?.isHabitable,
+    [currentPlanet, mode],
+  );
 
   const [formState, setFormState] = useState<FormStateType>({});
-  const [astronautFirstname, setAstronautFirstname] = useState('');
-  const [astronautLastname, setAstronautLastname] = useState('');
-  const [astronautOriginPlanet] = useState('');
+  const [astronautFirstname, setAstronautFirstname] = useState(
+    astronautForUpdate?.firstname || '',
+  );
+  const [astronautLastname, setAstronautLastname] = useState(
+    astronautForUpdate?.lastname || '',
+  );
+  const [astronautOriginPlanet, setAstronautOriginPlanet] = useState(
+    astronautForUpdate?.id.toString() || '',
+  );
 
-  const validateAndSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const validationErrors: FormStateType = {};
-    if (
-      astronautFirstname === ''
-    ) {
-      validationErrors.firstname = 'firstname is required';
-    }
-    if (
-      astronautLastname === ''
-    ) {
-      validationErrors.lastname = 'lastname is require';
-    }
-    if (
-      astronautOriginPlanet === ''
-    ) {
-      validationErrors.planet = 'planet of origin is required';
-    }
+  const validateAndSubmit = useCallback(
+    (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const validationErrors: FormStateType = {};
+      if (astronautFirstname === '') {
+        validationErrors.firstname = 'firstname is required';
+      }
+      if (astronautLastname === '') {
+        validationErrors.lastname = 'lastname is required';
+      }
+      if (astronautOriginPlanet === '') {
+        validationErrors.planet = 'planet of origin is required';
+      }
 
-    // submit the form if there is no validation error
-    if (
-      !Object.keys(validationErrors).length &&
-      astronautFirstname &&
-      astronautLastname &&
-      astronautOriginPlanet
-    ) {
-      onSubmit({
-        firstname: astronautFirstname,
-        lastname: astronautLastname,
-        originPlanetId: parseInt(astronautOriginPlanet),
-      });
-    } else {
-      setFormState(validationErrors);
-    }
-  };
+      // submit the form if there is no validation error
+      if (
+        !Object.keys(validationErrors).length &&
+        astronautFirstname &&
+        astronautLastname &&
+        astronautOriginPlanet
+      ) {
+        onSubmit({
+          firstname: astronautFirstname,
+          lastname: astronautLastname,
+          originPlanetId: parseInt(astronautOriginPlanet),
+        });
+      } else {
+        setFormState(validationErrors);
+      }
+    },
+    [astronautFirstname, astronautLastname, astronautOriginPlanet, onSubmit],
+  );
 
   return (
-    <Flexbox className={componentClassNames} flexDirection="column">
+    <Flexbox className={componentClassNames} flexDirection='column'>
       <HUDWindow>
         {mode === 'create' ? (
           <h2>Create an Astronaut</h2>
@@ -106,33 +123,56 @@ export function AstronautForm({
           noValidate
         >
           <HUDInput
-            name="firstname"
-            label="firstname"
-            placeholder="John"
+            name='firstname'
+            label='firstname'
+            placeholder='John'
             required
-            defaultValue={astronautForUpdate?.firstname || ''}
+            value={astronautFirstname}
             error={formState.firstname}
             onChange={(e) => setAstronautFirstname(e.target.value)}
           />
           <HUDInput
-            name="lastname"
-            label="lastname"
-            placeholder="Doe"
+            name='lastname'
+            label='lastname'
+            placeholder='Doe'
             required
-            defaultValue={astronautForUpdate?.lastname || ''}
+            value={astronautLastname}
             error={formState.lastname}
             onChange={(e) => setAstronautLastname(e.target.value)}
           />
+          <HUDAutoComplete
+            fetchOptions={getPlanetListByNameAPICall}
+            label={'Planet'}
+            onChange={(selectedOption: AutoCompleteOptionType) =>
+              setAstronautOriginPlanet(selectedOption.value)
+            }
+            defaultValue={
+              astronautForUpdate
+                ? {
+                    label: astronautForUpdate.originPlanet.name,
+                    value: astronautForUpdate.id.toString(),
+                  }
+                : {
+                    label: '',
+                    value: '',
+                  }
+            }
+          />
           <Flexbox
             className={styles.astronautformButtons}
-            alignItems="center"
-            justifyContent="center"
+            alignItems='center'
+            justifyContent='center'
           >
             <HUDButton onClick={onCancel}>CANCEL</HUDButton>
             {mode === 'create' ? (
-              <HUDButton disabled={!canCreate}>CREATE</HUDButton>
+              <HUDButton
+                disabled={!canCreate}
+                onClick={() => validateAndSubmit}
+              >
+                CREATE
+              </HUDButton>
             ) : (
-              <HUDButton>EDIT</HUDButton>
+              <HUDButton onClick={() => validateAndSubmit}>EDIT</HUDButton>
             )}
           </Flexbox>
         </Form>
