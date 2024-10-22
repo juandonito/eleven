@@ -47,26 +47,26 @@ export function Cockpit() {
 
   useEffect(() => {
     setPlanetList({ isLoading, planetList: data, error });
-  }, [data, error, isLoading, setPlanetList]);
+  }, [data, error, isLoading]);
 
   const { isTraveling } = useIsTraveling();
 
   return (
-    <Flexbox className={styles.cockpit} flexDirection="column">
+    <Flexbox className={styles.cockpit} flexDirection='column'>
       <Space isHyperSpace={isTraveling} className={styles.cockpitSpace} />
       <Flexbox
-        flex="1 1 auto"
-        justifyContent="space-between"
-        alignItems="flex-start"
+        flex='1 1 auto'
+        justifyContent='space-between'
+        alignItems='flex-start'
       >
         <div className={styles.cockpitElevenLabsLogo}>Eleven Labs</div>
         <Perspective
-          value="900px"
-          transform="rotateY(-40deg)"
+          value='900px'
+          transform='rotateY(-40deg)'
           className={styles.cockpitSpaceshipAdminButtonContainer}
         >
           <HUDButton onClick={handleNavigateToSpaceshipAdminPage}>
-            <Flexbox justifyContent="center" alignItems="center">
+            <Flexbox justifyContent='center' alignItems='center'>
               <IconSpaceship
                 className={styles.cockpitSpaceshipAdminButtonIcon}
               />
@@ -75,21 +75,21 @@ export function Cockpit() {
           </HUDButton>
         </Perspective>
       </Flexbox>
-      <Flexbox flex="2 1 auto" alignItems="center">
+      <Flexbox flex='2 1 auto' alignItems='center'>
         <PlanetListErrorBoundary>
           <PlanetSelectionContainer />
         </PlanetListErrorBoundary>
         <CurrentPlanetContainer />
       </Flexbox>
       <Flexbox
-        flexDirection="row"
-        flex="1 1 auto"
-        justifyContent="flex-end"
-        alignItems="flex-end"
+        flexDirection='row'
+        flex='1 1 auto'
+        justifyContent='flex-end'
+        alignItems='flex-end'
       >
         <Perspective
-          value="900px"
-          transform="rotateY(-40deg)"
+          value='900px'
+          transform='rotateY(-40deg)'
           className={styles.cockpitHyperspaceButtonContainer}
         >
           <TravelContainer />
