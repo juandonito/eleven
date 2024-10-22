@@ -72,21 +72,21 @@ export function AstronautListContainer({
 
   return (
     <>
-      {!isLoading ? (
+      {isLoading ? (
         <HUDWindowLoader
-          label="astronaut in the spaceship"
+          label='astronaut in the spaceship'
           className={styles.astronautlistcontainer}
         />
       ) : (
         <HUDAstronautList
-          label="astronauts in the spaceship"
+          label='astronauts in the spaceship'
           astronautList={mapAstronautList(astronauts)}
           onEdit={({ id }: AstronautForList) =>
             handleNavigateToCreateOrEditAstronaut(id)
           }
           onDelete={handleDeleteAstronaut}
           className={styles.astronautlistcontainer}
-          emptyAstronautListMessage="Any astronaut in your spaceship"
+          emptyAstronautListMessage='Any astronaut in your spaceship'
         />
       )}
     </>
