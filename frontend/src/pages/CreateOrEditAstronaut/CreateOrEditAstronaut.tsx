@@ -25,41 +25,51 @@ import { useCurrentPlanet } from '../../contexts/SpaceTravelContext.tsx';
 
 // Styles
 import styles from './CreateOrEditAstronaut.module.css';
+import { useCallback, useMemo } from 'react';
 
 export function CreateOrEditAstronaut() {
   const navigate = useNavigate();
   const { astronautId } = useParams();
   const handleCreateOrEditCancel = () => navigate('/spaceship-admin');
-  const handleAstronautFormCreate = async (
-    astronaut: CreateUpdateAstronautRequestBody,
-  ) => {
-    await createAstronautAPICall(astronaut);
-    navigate('/spaceship-admin');
-  };
-  const handleAstronautFormEdit = async (
-    astronaut: CreateUpdateAstronautRequestBody,
-  ) => {
-    if (!astronautId) {
-      throw new Error('Missing astronautId, WRONG URL!');
-    }
-    await updateAstronautAPICall(astronautId, astronaut);
-    navigate('/spaceship-admin');
-  };
+  const handleAstronautFormCreate = useCallback(
+    async (astronaut: CreateUpdateAstronautRequestBody) => {
+      await createAstronautAPICall(astronaut);
+      navigate('/spaceship-admin');
+    },
+    [navigate],
+  );
+  const handleAstronautFormEdit = useCallback(
+    async (astronaut: CreateUpdateAstronautRequestBody) => {
+      if (!astronautId) {
+        throw new Error('Missing astronautId, WRONG URL!');
+      }
+      await updateAstronautAPICall(astronautId, astronaut);
+      navigate('/spaceship-admin');
+    },
+    [astronautId, navigate],
+  );
 
-  const mode = astronautId ? 'edit' : 'create';
+  const mode = useMemo(() => (astronautId ? 'edit' : 'create'), [astronautId]);
+
   const handleAstronautFormSubmit =
     mode === 'create' ? handleAstronautFormCreate : handleAstronautFormEdit;
 
   const { currentPlanet } = useCurrentPlanet();
-  const { isLoading, data } = useFetch<Astronaut>((options?: RequestInit) =>
-    getOneAstronautFromAPI(astronautId, options),
+
+  const fetchAstronautWithId = useCallback(
+    (options?: RequestInit): Promise<Astronaut | undefined> =>
+      getOneAstronautFromAPI(astronautId, options),
+    [astronautId],
   );
 
+  const { isLoading, data: astronautForUpdate } =
+    useFetch<Astronaut>(fetchAstronautWithId);
+
   return (
-    <Flexbox flexDirection="column" className={styles.createoreditastronaut}>
+    <Flexbox flexDirection='column' className={styles.createoreditastronaut}>
       {currentPlanet === 'NO_WHERE' ? (
         <HUDWindowWarning
-          warning="current planet: UnKnow"
+          warning='current planet: UnKnow'
           className={styles.createoreditastronautCurrentPlanetWarning}
         />
       ) : (
@@ -69,12 +79,12 @@ export function CreateOrEditAstronaut() {
           className={styles.createoreditastronautCurrentPlanet}
         />
       )}
-      <Flexbox justifyContent="center" alignItems="center">
+      <Flexbox justifyContent='center' alignItems='center'>
         {isLoading ? (
           <HUDWindowLoader />
         ) : (
           <AstronautForm
-            astronautForUpdate={data}
+            astronautForUpdate={astronautForUpdate}
             mode={mode}
             onCancel={handleCreateOrEditCancel}
             onSubmit={handleAstronautFormSubmit}
