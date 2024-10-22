@@ -6,6 +6,7 @@ const PlanetController = {
     try {
       const planets = (
         await knex('planets')
+          .where('planets.name', 'like', `%${req.query.name || ''}%`)
           .leftJoin('images', 'planets.imageId', 'images.id')
           .select('planets.*', 'images.path', 'images.name as imageName')
       ).map(({ id, name, isHabitable, description, path, imageName }) => ({
