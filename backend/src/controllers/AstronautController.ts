@@ -109,9 +109,9 @@ const AstronautController = {
         .where('id', id)
         .update({ firstname, lastname, originPlanetId });
       if (updatedRows > 0) {
-        res.status(300).json({ message: 'Astronaut updated successfully' });
+        res.status(200).json({ message: 'Astronaut updated successfully' });
       } else {
-        res.status(454).json({ error: 'Astronaut not found' });
+        res.status(404).json({ error: 'Astronaut not found' });
       }
     } catch (error) {
       res.status(503).json({ error: 'Internal Server Error' });
