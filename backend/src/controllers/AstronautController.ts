@@ -1,22 +1,40 @@
 import { Request, Response } from 'express';
 import knex from '../db';
+import { CommonDB } from '../common/common.db';
 
 const AstronautController = {
   getAll: async (req: Request, res: Response): Promise<void> => {
     try {
-      const astronauts = (
-        await knex('astronauts')
-          .leftJoin('planets', 'astronauts.originPlanetId', 'planets.id')
-          .leftJoin('images', 'planets.imageId', 'images.id')
-          .select(
-            'astronauts.*',
-            'planets.name',
-            'planets.description',
-            'planets.isHabitable',
-            'images.path',
-            'images.name as imageName',
-          )
-      ).map(
+      const { results, count } =
+        await CommonDB.createQueryBuilderWithPagination<{
+          id: number;
+          firstname: string;
+          lastname: string;
+          name: string;
+          isHabitable: boolean;
+          description: string;
+          path: string;
+          imageName: string;
+        }>(
+          'astronauts',
+          (queryBuilder) => {
+            return queryBuilder
+              .leftJoin('planets', 'astronauts.originPlanetId', 'planets.id')
+              .leftJoin('images', 'planets.imageId', 'images.id')
+              .select(
+                'astronauts.*',
+                'planets.name',
+                'planets.description',
+                'planets.isHabitable',
+                'images.path',
+                'images.name as imageName',
+              );
+          },
+          Number(req.query.page),
+          Number(req.query.limit),
+        );
+
+      const astronauts = results.map(
         ({
           id,
           firstname,
@@ -41,7 +59,10 @@ const AstronautController = {
           },
         }),
       );
-      res.status(200).json(astronauts);
+      res.status(200).json({
+        astronauts,
+        count,
+      });
     } catch (error) {
       res.status(500).json({ error: 'Internal Server Error' });
     }

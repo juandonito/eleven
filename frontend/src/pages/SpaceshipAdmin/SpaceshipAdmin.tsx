@@ -42,12 +42,12 @@ export function SpaceshipAdmin() {
   const { setAstronautList } = useAstronautList();
 
   useEffect(() => {
-    setAstronautList({ isLoading, astronautList: data, error });
+    setAstronautList({ isLoading, astronautList: data?.astronauts, error });
   }, [data, error, isLoading]);
 
   return (
-    <Flexbox className={styles.spaceshipadmin} flexDirection="column">
-      <Flexbox justifyContent="center" alignItems="center">
+    <Flexbox className={styles.spaceshipadmin} flexDirection='column'>
+      <Flexbox justifyContent='center' alignItems='center'>
         <SpaceshipAdminHeaderContainer
           handleNavigateToCockpit={handleNavigateToCockpit}
           handleNavigateToCreateOrEditAstronaut={
@@ -55,7 +55,7 @@ export function SpaceshipAdmin() {
           }
         />
       </Flexbox>
-      <Flexbox justifyContent="center" alignItems="center">
+      <Flexbox justifyContent='center' alignItems='center'>
         <AstronautListErrorBoundary>
           <AstronautListContainer
             handleNavigateToCreateOrEditAstronaut={

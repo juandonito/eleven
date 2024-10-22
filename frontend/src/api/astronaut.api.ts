@@ -11,7 +11,10 @@ export type Astronaut = {
   originPlanet: Planet;
 };
 
-export type GetAstronautListAPIResponse = Astronaut[];
+export type GetAstronautListAPIResponse = {
+  astronauts: Astronaut[];
+  count: number;
+};
 
 export function getAstronautListFromAPI<GetAstronautListAPIResponse>(
   options?: RequestInit,
@@ -41,8 +44,8 @@ export async function getOneAstronautFromAPI<Astronaut>(
 }
 
 export type CreateUpdateAstronautRequestBody = Pick<
-Astronaut,
-'firstname' | 'lastname'
+  Astronaut,
+  'firstname' | 'lastname'
 > & { originPlanetId: number };
 
 export type CreateUpdateAstronautResponse = CreateUpdateAstronautRequestBody & {
