@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install Node.js dependencies specified in package.json
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application code to the working directory
 COPY . .

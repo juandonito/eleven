@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN npm install
+RUN npm ci
 
 # Command to run the app
 CMD ["npm", "run", "dev"]
