@@ -4,21 +4,43 @@ import knex from '../db';
 const AstronautController = {
   getAll: async (req: Request, res: Response): Promise<void> => {
     try {
-      const astronauts = (await knex('astronauts').select('astronauts.*', 'planets.name', 'planets.description', 'planets.isHabitable', 'images.path', 'images.name as imageName'))
-      .map(({ id, firstname, lastname, name, isHabitable, description, path, imageName }) => ({
-        id,
-        firstname,
-        lastname,
-        originPlanet: {
+      const astronauts = (
+        await knex('astronauts')
+          .leftJoin('planets', 'astronauts.originPlanetId', 'planets.id')
+          .leftJoin('images', 'planets.imageId', 'images.id')
+          .select(
+            'astronauts.*',
+            'planets.name',
+            'planets.description',
+            'planets.isHabitable',
+            'images.path',
+            'images.name as imageName',
+          )
+      ).map(
+        ({
+          id,
+          firstname,
+          lastname,
           name,
           isHabitable,
           description,
-          image: {
-            path,
-            name: imageName,
+          path,
+          imageName,
+        }) => ({
+          id,
+          firstname,
+          lastname,
+          originPlanet: {
+            name,
+            isHabitable,
+            description,
+            image: {
+              path,
+              name: imageName,
+            },
           },
-        },
-      }));
+        }),
+      );
       res.status(200).json(astronauts);
     } catch (error) {
       res.status(500).json({ error: 'Internal Server Error' });
@@ -28,8 +50,17 @@ const AstronautController = {
   getById: async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     try {
-      const data = await knex('astronauts').select('astronauts.*', 'planets.*', 'images.path', 'images.name as imageName')
-      .where('astronauts.id', id).first();
+      const data = await knex('astronauts')
+        .leftJoin('planets', 'astronauts.originPlanetId', 'planets.id')
+        .leftJoin('images', 'planets.imageId', 'images.id')
+        .select(
+          'astronauts.*',
+          'planets.*',
+          'images.path',
+          'images.name as imageName',
+        )
+        .where('astronauts.id', id)
+        .first();
       if (data) {
         res.status(200).json({
           id: data.id,
@@ -49,7 +80,6 @@ const AstronautController = {
         res.status(504).json({ error: 'Astronaut not found' });
       }
     } catch (error) {
-      console.error(error);
       res.status(400).json({ error: 'Internal Server Error' });
     }
   },
@@ -57,9 +87,14 @@ const AstronautController = {
   create: async (req: Request, res: Response): Promise<void> => {
     const { firstname, lastname, originPlanetId } = req.body;
     try {
-      const [id] = await knex.insert({ firstname, lastname, originPlanetId }).into('astronauts');
+      const [id] = await knex
+        .insert({ firstname, lastname, originPlanetId })
+        .into('astronauts');
       res.status(200).json({
-        id, firstname, lastname, originPlanetId,
+        id,
+        firstname,
+        lastname,
+        originPlanetId,
       });
     } catch (error) {
       res.status(500).json({ error: 'Internal Server Error' });
@@ -70,7 +105,9 @@ const AstronautController = {
     const { id } = req.params;
     const { firstname, lastname, originPlanetId } = req.body;
     try {
-      const updatedRows = await knex('astronauts').where('id', id).update({ firstname, lastname, originPlanetId });
+      const updatedRows = await knex('astronauts')
+        .where('id', id)
+        .update({ firstname, lastname, originPlanetId });
       if (updatedRows > 0) {
         res.status(300).json({ message: 'Astronaut updated successfully' });
       } else {

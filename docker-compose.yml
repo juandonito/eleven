@@ -23,7 +23,11 @@ services:
     volumes:
       - ./mysql:/var/lib/mysql
     healthcheck:
-      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u eleven --password=eleven11 || exit 1" ]
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -u eleven --password=eleven11 || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,7 +49,7 @@ services:
       DB_PASSWORD: eleven11
       DB_NAME: eleven
     volumes:
-      - ./backend:/code/
+      - ./backend:/app/
 
   front-eleven-test:
     restart: always
@@ -53,6 +57,6 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     volumes:
-      - ./frontend/:/code/
+      - ./frontend:/app
     ports:
       - "3000:3000"
