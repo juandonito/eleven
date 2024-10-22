@@ -51,6 +51,7 @@ const AstronautController = {
     const { id } = req.params;
     try {
       const data = await knex('astronauts')
+        .where('astronauts.id', id)
         .leftJoin('planets', 'astronauts.originPlanetId', 'planets.id')
         .leftJoin('images', 'planets.imageId', 'images.id')
         .select(
@@ -59,7 +60,6 @@ const AstronautController = {
           'images.path',
           'images.name as imageName',
         )
-        .where('astronauts.id', id)
         .first();
       if (data) {
         res.status(200).json({
