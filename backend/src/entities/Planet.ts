@@ -4,7 +4,7 @@ interface Planet {
   id: number;
   name: string;
   description: string;
-  image: Image;
+  image: Omit<Image, 'id'>;
   isHabitable: boolean;
 }
 
