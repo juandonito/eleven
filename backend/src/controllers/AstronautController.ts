@@ -1,155 +1,96 @@
-import { Request, Response } from 'express';
-import knex from '../db';
-import { CommonDB } from '../common/common.db';
+import { NextFunction, Request, Response } from 'express';
+import { InternalServerError, NotFoundError } from '../errorHandling/errors';
+import AstronautsUseCases from '../usecases/AstronautsUseCases';
 
 const AstronautController = {
-  getAll: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { results, count } =
-        await CommonDB.createQueryBuilderWithPagination<{
-          id: number;
-          firstname: string;
-          lastname: string;
-          name: string;
-          isHabitable: boolean;
-          description: string;
-          path: string;
-          imageName: string;
-        }>(
-          'astronauts',
-          (queryBuilder) => {
-            return queryBuilder
-              .leftJoin('planets', 'astronauts.originPlanetId', 'planets.id')
-              .leftJoin('images', 'planets.imageId', 'images.id')
-              .select(
-                'astronauts.*',
-                'planets.name',
-                'planets.description',
-                'planets.isHabitable',
-                'images.path',
-                'images.name as imageName',
-              );
-          },
-          Number(req.query.page),
-          Number(req.query.limit),
-        );
+  getAll: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    const page: number = Number(req.query.page);
+    const limit: number = Number(req.query.limit);
 
-      const astronauts = results.map(
-        ({
-          id,
-          firstname,
-          lastname,
-          name,
-          isHabitable,
-          description,
-          path,
-          imageName,
-        }) => ({
-          id,
-          firstname,
-          lastname,
-          originPlanet: {
-            name,
-            isHabitable,
-            description,
-            image: {
-              path,
-              name: imageName,
-            },
-          },
-        }),
-      );
-      res.status(200).json({
-        astronauts,
-        count,
+    try {
+      const result = await AstronautsUseCases.getAstronautsList({
+        page,
+        limit,
       });
+      res.json(result);
     } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+      next(error);
     }
   },
 
-  getById: async (req: Request, res: Response): Promise<void> => {
+  getById: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     const { id } = req.params;
     try {
-      const data = await knex('astronauts')
-        .where('astronauts.id', id)
-        .leftJoin('planets', 'astronauts.originPlanetId', 'planets.id')
-        .leftJoin('images', 'planets.imageId', 'images.id')
-        .select(
-          'astronauts.*',
-          'planets.*',
-          'images.path',
-          'images.name as imageName',
-        )
-        .first();
-      if (data) {
-        res.status(200).json({
-          id: data.id,
-          firstname: data.firstname,
-          lastname: data.lastname,
-          originPlanet: {
-            name: data.name,
-            isHabitable: data.isHabitable,
-            description: data.description,
-            image: {
-              path: data.path,
-              name: data.imageName,
-            },
-          },
-        });
-      } else {
-        res.status(504).json({ error: 'Astronaut not found' });
-      }
+      const astronaut = await AstronautsUseCases.getAstronautById(Number(id));
+      res.status(200).json(astronaut);
     } catch (error) {
-      res.status(400).json({ error: 'Internal Server Error' });
+      next(error);
     }
   },
 
-  create: async (req: Request, res: Response): Promise<void> => {
+  create: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     const { firstname, lastname, originPlanetId } = req.body;
     try {
-      const [id] = await knex
-        .insert({ firstname, lastname, originPlanetId })
-        .into('astronauts');
-      res.status(200).json({
-        id,
+      const astronaut = await AstronautsUseCases.createAstronaut({
         firstname,
         lastname,
         originPlanetId,
       });
+      res.status(200).json(astronaut);
     } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+      next(error);
     }
   },
 
-  update: async (req: Request, res: Response): Promise<void> => {
+  update: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     const { id } = req.params;
     const { firstname, lastname, originPlanetId } = req.body;
     try {
-      const updatedRows = await knex('astronauts')
-        .where('id', id)
-        .update({ firstname, lastname, originPlanetId });
-      if (updatedRows > 0) {
-        res.status(200).json({ message: 'Astronaut updated successfully' });
-      } else {
-        res.status(404).json({ error: 'Astronaut not found' });
+      const updated = await AstronautsUseCases.updateAstronaut({
+        id: Number(id),
+        firstname,
+        lastname,
+        originPlanetId,
+      });
+      if (!updated) {
+        next(new InternalServerError());
       }
+      res.status(200).json({ message: 'Astronaut updated successfully' });
     } catch (error) {
-      res.status(503).json({ error: 'Internal Server Error' });
+      next(error);
     }
   },
 
-  delete: async (req: Request, res: Response): Promise<void> => {
+  delete: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     const { id } = req.params;
     try {
-      const deletedRows = await knex('astronauts').where('id', id).del();
-      if (deletedRows > 0) {
-        res.status(403).json({ message: 'Astronaut deleted successfully' });
-      } else {
-        res.status(404).json({ error: 'Astronaut not found' });
+      const deleted = await AstronautsUseCases.deleteAstronaut(Number(id));
+      if (!deleted) {
+        next(new NotFoundError('Astronaut not found'));
       }
+      res.status(200).json({ message: 'Astronaut deleted successfully' });
     } catch (error) {
-      res.status(405).json({ error: 'Internal Server Error' });
+      next(error);
     }
   },
 };
