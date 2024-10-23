@@ -1,5 +1,6 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import knex from '../db';
+import PlanetsUseCases from '../usecases/PlanetsUseCases';
 
 const PlanetController = {
   getAll: async (req: Request, res: Response): Promise<void> => {
@@ -25,30 +26,17 @@ const PlanetController = {
     }
   },
 
-  getById: async (req: Request, res: Response): Promise<void> => {
+  getById: async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     const { id } = req.params;
     try {
-      const data = await knex('planets')
-        .where('planets.id', id)
-        .leftJoin('images', 'planets.imageId', 'images.id')
-        .select('planets.*', 'images.path', 'images.name as imageName')
-        .first();
-      if (data) {
-        res.status(200).json({
-          id: data.id,
-          name: data.name,
-          isHabitable: data.isHabitable,
-          description: data.description,
-          image: {
-            path: data.path,
-            name: data.imageName,
-          },
-        });
-      } else {
-        res.status(404).json({ error: 'Planet not found' });
-      }
+      const result = await PlanetsUseCases.getPlanetById(Number(id));
+      res.status(200).json(result);
     } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+      next(error);
     }
   },
 
